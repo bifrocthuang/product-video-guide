@@ -6,6 +6,8 @@ const CONFIG = {
     "BV1p45d6AEgm": "门窗整张与拼接贴纸教程",
     "BV1A45d6PEKz": "门窗条纹贴纸安装教程",
     "BV1Sh5R66EGH":"790-890Duke-后副车架安装教程",
+    "BV1Ck5R6AEzC":"790+890侧板R教程",
+    "BV1tY5R6gEdb":"KTM390DUKE侧板大R安装教程"
   },
 
   // ====================== 产品分组（按产品分类） ======================
@@ -19,7 +21,12 @@ const CONFIG = {
     "Duke790-890":{
         name: "Duke790/890贴纸教程",
       desc: "Duke790/890贴纸相关教程",
-      videos: ["BV1Sh5R66EGH"]
+      videos: ["BV1Sh5R66EGH","BV1Ck5R6AEzC"]
+    },
+    "Duke390":{
+        name:"KTM390DUKE侧板大R安装教程",
+        desc:"KTM390DUKE侧板大R安装教程",
+        videos:"BV1tY5R6gEdb"
     }
   }
 }
