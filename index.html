@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品使用教程</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f5f7fa;padding:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .container{max-width:600px;margin:0 auto}
+  .header{text-align:center;margin-bottom:25px}
+  .header h1{font-size:22px;color:#333;margin-bottom:8px}
+  .header p{color:#666;font-size:14px}
+  .video-list{display:flex;flex-direction:column;gap:15px}
+  .video-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+  .video-title{font-size:16px;font-weight:500;color:#333;margin-bottom:12px}
+  .video-container{position:relative;width:100%;height:0;padding-bottom:56.25%;border-radius:8px;overflow:hidden}
+  .video-container iframe{position:absolute;left:0;top:0;width:100%;height:100%}
+  .empty-tip{text-align:center;padding:50px 0;color:#999}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1 id="pageTitle">产品使用教程</h1>
+    <p id="pageDesc">点击视频即可播放，支持全屏观看</p>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- 引入配置文件 -->
+<script src="./config.js"></script>
+
+<script>
+// 核心渲染逻辑（已修复标题显示问题）
+function getUrlParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
+function renderPage() {
+  const groupId = getUrlParam('group');
+  const videoId = getUrlParam('v');
+  const content = document.getElementById('content');
+  const pageTitle = document.getElementById('pageTitle');
+  const pageDesc = document.getElementById('pageDesc');
+
+  // 单个视频模式：?v=BV1xxxxxx
+  if (videoId) {
+    const videoTitle = CONFIG.videos[videoId];
+    if (!videoTitle) {
+      content.innerHTML = '<div class="empty-tip">该视频不存在</div>';
+      return;
+    }
+    pageTitle.textContent = videoTitle;
+    content.innerHTML = `
+      <div class="video-card">
+        <div class="video-container">
+          <iframe src="//player.bilibili.com/player.html?bvid=${videoId}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"></iframe>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 分组模式：?group=xxx
+  if (groupId) {
+    const group = CONFIG.groups[groupId];
+    if (!group || !group.videos || group.videos.length === 0) {
+      content.innerHTML = '<div class="empty-tip">该产品暂无教程</div>';
+      return;
+    }
+    pageTitle.textContent = group.name;
+    if (group.desc) pageDesc.textContent = group.desc;
+
+    // 单个视频直接全屏
+    if (group.videos.length === 1) {
+      const vid = group.videos[0];
+      const videoTitle = CONFIG.videos[vid];
+      content.innerHTML = `
+        <div class="video-card">
+          <div class="video-container">
+            <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"></iframe>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 多个视频显示列表
+    content.innerHTML = `
+      <div class="video-list">
+        ${group.videos.map(vid => {
+          const videoTitle = CONFIG.videos[vid];
+          return `
+            <div class="video-card">
+              <div class="video-title">${videoTitle}</div>
+              <div class="video-container">
+                <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"></iframe>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    return;
+  }
+
+  // 默认提示
+  content.innerHTML = '<div class="empty-tip">请扫描产品说明书上的二维码查看对应教程</div>';
+}
+
+// 页面加载完成后渲染
+document.addEventListener('DOMContentLoaded', renderPage);
+</script>
+</body>
+</html>
