@@ -73,15 +73,15 @@ const CONFIG = {
       videos: ["window_full_sticker", "window_stripe_sticker"],
       description: "window_stripe_notice",
     },
-    "Duke790-890":{
+    "Duke790890CS":{
       name: "Duke790/890贴纸教程",
-      desc: "Duke790/890贴纸相关教程",
+      desc: "Duke790/890后附车架和油箱侧板相关教程",
       videos: ["duke790_890_rear_frame", "duke790_890_side_panel"],
       description: "motorcycle_install",
     },
-    "Duke390":{
-      name:"KTM390DUKE侧板大R安装教程",
-      desc:"KTM390DUKE侧板大R安装教程",
+    "Duke390CB":{
+      name:"KTM390DUKE贴纸安装教程",
+      desc:"KTM390DUKE侧板大R贴纸安装教程",
       videos: ["duke390_side_panel"],
       description: "motorcycle_install",
     }
