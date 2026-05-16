@@ -24,7 +24,7 @@
   .video-list{display:flex;flex-direction:column;gap:15px}
   .video-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
   .video-title{font-size:16px;font-weight:500;color:#333;margin-bottom:12px;line-height:1.4}
-  /* 文字说明样式（自动换行+适配所有屏幕） */
+  /* 文字说明样式 */
   .video-desc{
     margin-bottom:12px;
     padding:12px;
@@ -41,7 +41,7 @@
   .video-container{position:relative;width:100%;height:0;padding-bottom:56.25%;border-radius:8px;overflow:hidden}
   .video-container iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:none}
   .empty-tip{text-align:center;padding:50px 0;color:#999}
-  /* 高清按钮：手机端标准点击高度 */
+  /* 高清按钮 */
   .hd-btn{
     margin-top:12px;
     padding:10px 16px;
@@ -81,18 +81,16 @@ function getUrlParam(name) {
   return params.get(name);
 }
 
-// 智能获取说明文本：支持ID引用和直接写文本
+// 智能获取说明文本
 function getDescription(desc) {
   if (!desc) return '';
-  // 如果是ID，从文本库中获取
   if (CONFIG.textLibrary && CONFIG.textLibrary[desc]) {
     return CONFIG.textLibrary[desc];
   }
-  // 如果是直接写的文本，直接返回
   return desc;
 }
 
-// 跳转B站高清（带确认弹窗）
+// 跳转B站高清
 function goToBilibili(bvid) {
   if(confirm('即将跳转至B站网页，您可自行选择更高视频清晰度观看')){
     window.open('https://www.bilibili.com/video/'+bvid, '_blank');
@@ -106,29 +104,32 @@ function renderPage() {
   const pageTitle = document.getElementById('pageTitle');
   const pageDesc = document.getElementById('pageDesc');
 
-  // 单个视频模式
+  // 单个视频模式（仅支持自定义ID）
   if (videoId) {
-    const videoTitle = CONFIG.videos[videoId];
-    const videoDesc = getDescription(CONFIG.descriptions ? CONFIG.descriptions[videoId] : '');
-    if (!videoTitle) {
+    const video = CONFIG.videos[videoId];
+    if (!video) {
       content.innerHTML = '<div class="empty-tip">该视频不存在</div>';
       return;
     }
+    const videoTitle = video.title;
+    const bvid = video.bvid;
+    const videoDesc = getDescription(CONFIG.descriptions ? CONFIG.descriptions[videoId] : '');
+    
     pageTitle.textContent = videoTitle;
     content.innerHTML = `
       <div class="video-card">
         ${videoDesc ? `<div class="video-desc">${videoDesc}</div>` : ''}
         <div class="video-container">
-          <iframe src="//player.bilibili.com/player.html?bvid=${videoId}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+          <iframe src="//player.bilibili.com/player.html?bvid=${bvid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
         </div>
-        <button class="hd-btn" onclick="goToBilibili('${videoId}')">点此前往B站切换1080P高清</button>
+        <button class="hd-btn" onclick="goToBilibili('${bvid}')">点此前往B站切换1080P高清</button>
         <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
       </div>
     `;
     return;
   }
 
-  // 分组模式
+  // 分组模式（完全修复[object Object]问题）
   if (groupId) {
     const group = CONFIG.groups[groupId];
     if (!group || !group.videos || group.videos.length === 0) {
@@ -138,39 +139,47 @@ function renderPage() {
     pageTitle.textContent = group.name;
     if (group.desc) pageDesc.textContent = group.desc;
 
-    // 获取分组统一说明（支持ID引用）
     const groupDesc = getDescription(group.description || '');
 
     // 分组内只有一个视频
     if (group.videos.length === 1) {
       const vid = group.videos[0];
-      const videoTitle = CONFIG.videos[vid];
+      const video = CONFIG.videos[vid];
+      if (!video) {
+        content.innerHTML = '<div class="empty-tip">该视频不存在</div>';
+        return;
+      }
+      const bvid = video.bvid;
+      
       content.innerHTML = `
         ${groupDesc ? `<div class="video-desc">${groupDesc}</div>` : ''}
         <div class="video-card">
           <div class="video-container">
-            <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+            <iframe src="//player.bilibili.com/player.html?bvid=${bvid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
           </div>
-          <button class="hd-btn" onclick="goToBilibili('${vid}')">点此前往B站切换1080P高清</button>
+          <button class="hd-btn" onclick="goToBilibili('${bvid}')">点此前往B站切换1080P高清</button>
           <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
         </div>
       `;
       return;
     }
 
-    // 分组内有多个视频
+    // 分组内有多个视频（彻底修复标题显示问题）
     content.innerHTML = `
       ${groupDesc ? `<div class="video-desc">${groupDesc}</div>` : ''}
       <div class="video-list">
         ${group.videos.map(vid => {
-          const videoTitle = CONFIG.videos[vid];
+          const video = CONFIG.videos[vid];
+          if (!video) return '';
+          const videoTitle = video.title;
+          const bvid = video.bvid;
           return `
             <div class="video-card">
               <div class="video-title">${videoTitle}</div>
               <div class="video-container">
-                <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+                <iframe src="//player.bilibili.com/player.html?bvid=${bvid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
               </div>
-              <button class="hd-btn" onclick="goToBilibili('${vid}')">点此前往B站切换1080P高清</button>
+              <button class="hd-btn" onclick="goToBilibili('${bvid}')">点此前往B站切换1080P高清</button>
               <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
             </div>
           `;
