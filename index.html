@@ -2,24 +2,66 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 刘海屏/全面屏完美适配 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>产品使用教程</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#f5f7fa;padding:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  /* 全局安全区域适配 */
+  body{
+    background:#f5f7fa;
+    padding:20px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
   .container{max-width:600px;margin:0 auto}
   .header{text-align:center;margin-bottom:25px}
-  .header h1{font-size:22px;color:#333;margin-bottom:8px}
-  .header p{color:#666;font-size:14px}
+  .header h1{font-size:22px;color:#333;margin-bottom:8px;line-height:1.4}
+  .header p{color:#666;font-size:14px;line-height:1.5}
   .video-list{display:flex;flex-direction:column;gap:15px}
   .video-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-  .video-title{font-size:16px;font-weight:500;color:#333;margin-bottom:12px}
+  .video-title{font-size:16px;font-weight:500;color:#333;margin-bottom:12px;line-height:1.4}
+  /* 文字说明样式（自动换行+适配所有屏幕） */
+  .video-desc{
+    margin-bottom:12px;
+    padding:12px;
+    background:#f8f9fa;
+    border-radius:6px;
+    color:#555;
+    font-size:13px;
+    line-height:1.6;
+    white-space:pre-line;
+    word-break:break-word;
+    overflow-wrap:break-word;
+  }
+  /* 视频容器：16:9固定比例 */
   .video-container{position:relative;width:100%;height:0;padding-bottom:56.25%;border-radius:8px;overflow:hidden}
-  .video-container iframe{position:absolute;left:0;top:0;width:100%;height:100%}
+  .video-container iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:none}
   .empty-tip{text-align:center;padding:50px 0;color:#999}
-  /* 高清按钮样式 */
-  .hd-btn{margin-top:12px;padding:8px 16px;background:#00a1d6;color:#fff;border:none;border-radius:6px;width:100%;font-size:14px;cursor:pointer;}
-  .hd-tip{text-align:center;margin-top:8px;color:#666;font-size:12px;line-height:1.5;}
+  /* 高清按钮：手机端标准点击高度 */
+  .hd-btn{
+    margin-top:12px;
+    padding:10px 16px;
+    background:#00a1d6;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    width:100%;
+    font-size:14px;
+    cursor:pointer;
+    min-height:44px;
+  }
+  .hd-tip{
+    text-align:center;
+    margin-top:8px;
+    color:#666;
+    font-size:12px;
+    line-height:1.5;
+    padding-bottom:4px;
+  }
 </style>
 </head>
 <body>
@@ -39,7 +81,18 @@ function getUrlParam(name) {
   return params.get(name);
 }
 
-// 主动跳转B站高清（带确认弹窗）
+// 智能获取说明文本：支持ID引用和直接写文本
+function getDescription(desc) {
+  if (!desc) return '';
+  // 如果是ID，从文本库中获取
+  if (CONFIG.textLibrary && CONFIG.textLibrary[desc]) {
+    return CONFIG.textLibrary[desc];
+  }
+  // 如果是直接写的文本，直接返回
+  return desc;
+}
+
+// 跳转B站高清（带确认弹窗）
 function goToBilibili(bvid) {
   if(confirm('即将跳转至B站网页，您可自行选择更高视频清晰度观看')){
     window.open('https://www.bilibili.com/video/'+bvid, '_blank');
@@ -56,6 +109,7 @@ function renderPage() {
   // 单个视频模式
   if (videoId) {
     const videoTitle = CONFIG.videos[videoId];
+    const videoDesc = getDescription(CONFIG.descriptions ? CONFIG.descriptions[videoId] : '');
     if (!videoTitle) {
       content.innerHTML = '<div class="empty-tip">该视频不存在</div>';
       return;
@@ -63,8 +117,9 @@ function renderPage() {
     pageTitle.textContent = videoTitle;
     content.innerHTML = `
       <div class="video-card">
+        ${videoDesc ? `<div class="video-desc">${videoDesc}</div>` : ''}
         <div class="video-container">
-          <iframe src="//player.bilibili.com/player.html?bvid=${videoId}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+          <iframe src="//player.bilibili.com/player.html?bvid=${videoId}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
         </div>
         <button class="hd-btn" onclick="goToBilibili('${videoId}')">点此前往B站切换1080P高清</button>
         <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
@@ -73,7 +128,7 @@ function renderPage() {
     return;
   }
 
-  // 分组模式（单视频）
+  // 分组模式
   if (groupId) {
     const group = CONFIG.groups[groupId];
     if (!group || !group.videos || group.videos.length === 0) {
@@ -83,13 +138,18 @@ function renderPage() {
     pageTitle.textContent = group.name;
     if (group.desc) pageDesc.textContent = group.desc;
 
+    // 获取分组统一说明（支持ID引用）
+    const groupDesc = getDescription(group.description || '');
+
+    // 分组内只有一个视频
     if (group.videos.length === 1) {
       const vid = group.videos[0];
       const videoTitle = CONFIG.videos[vid];
       content.innerHTML = `
+        ${groupDesc ? `<div class="video-desc">${groupDesc}</div>` : ''}
         <div class="video-card">
           <div class="video-container">
-            <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+            <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
           </div>
           <button class="hd-btn" onclick="goToBilibili('${vid}')">点此前往B站切换1080P高清</button>
           <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
@@ -98,8 +158,9 @@ function renderPage() {
       return;
     }
 
-    // 分组模式（多视频）
+    // 分组内有多个视频
     content.innerHTML = `
+      ${groupDesc ? `<div class="video-desc">${groupDesc}</div>` : ''}
       <div class="video-list">
         ${group.videos.map(vid => {
           const videoTitle = CONFIG.videos[vid];
@@ -107,7 +168,7 @@ function renderPage() {
             <div class="video-card">
               <div class="video-title">${videoTitle}</div>
               <div class="video-container">
-                <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+                <iframe src="//player.bilibili.com/player.html?bvid=${vid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
               </div>
               <button class="hd-btn" onclick="goToBilibili('${vid}')">点此前往B站切换1080P高清</button>
               <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
