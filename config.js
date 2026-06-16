@@ -23,9 +23,7 @@ const CONFIG = {
     `
   },
 
-  // ====================== 视频库（核心修改：自定义ID + BV号映射） ======================
-  // ✅ 现在BV号只需要写一次，所有地方都用自定义ID调用
-  // ✅ 命名规范：产品类型_视频内容（全小写，下划线分隔）
+  // ====================== 视频库 ======================
   videos: {
     // 门窗贴纸系列
     "window_full_sticker": {
@@ -47,25 +45,76 @@ const CONFIG = {
       bvid: "BV1Ck5R6AEzC"
     },
 
-    // Duke390系列
+    // Duke390系列 - 原有视频
     "duke390_side_panel": {
       title: "KTM390DUKE侧板大R安装教程",
       bvid: "BV1tY5R6gEdb"
+    },
+
+    // Duke390系列 - 新增前挡泥板视频
+    "duke390_fender_a_duke": {
+      title: "390前挡泥板-A款+duke",
+      bvid: "BV1MojV68ELU"
+    },
+    "duke390_fender_a_rocket": {
+      title: "390前挡泥板-A款+弯道火箭",
+      bvid: "BV1mojV6bELp"
+    },
+    "duke390_fender_b": {
+      title: "390前挡泥板-B款",
+      bvid: "BV1mojV68Efd"
+    },
+    "duke390_fender_c": {
+      title: "390前挡泥板-C款",
+      bvid: "BV1DSjV6PEUF"
+    },
+    "duke390_fender_d": {
+      title: "390前挡泥板-D款",
+      bvid: "BV1QSjV6PExw"
+    },
+    "duke390_fender_e": {
+      title: "390前挡泥板-E款",
+      bvid: "BV1QSjV6PEgi"
+    },
+    "duke390_fender_f_duke": {
+      title: "390前挡泥板-F款+DUKE",
+      bvid: "BV1QmjV6vEvR"
+    },
+    "duke390_fender_f_rocket": {
+      title: "390前挡泥板-F款+弯道火箭",
+      bvid: "BV1SXjV6wE68"
+    },
+    "duke390_fender_g_duke": {
+      title: "390前挡泥板-G款+DUKE",
+      bvid: "BV1SXjV6wErP"
+    },
+    "duke390_fender_g_rocket": {
+      title: "390前挡泥板-G款+弯道火箭",
+      bvid: "BV13DjV6eE3L"
     }
   },
 
-  // ====================== 单个视频说明（用自定义ID调用） ======================
-  // 完全保留你原来的引用关系，只是把BV号换成了自定义ID
+  // ====================== 单个视频说明映射 ======================
   descriptions: {
     "window_full_sticker": "window_stripe_notice",
     "window_stripe_sticker": "window_stripe_notice",
     "duke790_890_rear_frame": "motorcycle_install",
     "duke790_890_side_panel": "motorcycle_install",
-    "duke390_side_panel": "motorcycle_install"
+    "duke390_side_panel": "motorcycle_install",
+    // 新增前挡泥板视频全部复用通用摩托车安装说明
+    "duke390_fender_a_duke": "motorcycle_install",
+    "duke390_fender_a_rocket": "motorcycle_install",
+    "duke390_fender_b": "motorcycle_install",
+    "duke390_fender_c": "motorcycle_install",
+    "duke390_fender_d": "motorcycle_install",
+    "duke390_fender_e": "motorcycle_install",
+    "duke390_fender_f_duke": "motorcycle_install",
+    "duke390_fender_f_rocket": "motorcycle_install",
+    "duke390_fender_g_duke": "motorcycle_install",
+    "duke390_fender_g_rocket": "motorcycle_install"
   },
 
-  // ====================== 产品分组（用自定义ID调用） ======================
-  // 完全保留你原来的分组结构和说明引用
+  // ====================== 产品分组 ======================
   groups: {
     "menchuang": {
       name: "门窗贴纸系列教程",
@@ -81,14 +130,35 @@ const CONFIG = {
     },
     "Duke390CB":{
       name:"KTM390DUKE贴纸安装教程",
-      desc:"KTM390DUKE侧板大R贴纸安装教程",
-      videos: ["duke390_side_panel"],
+      desc:"KTM390DUKE贴纸安装教程，请选择对应的商品查看教程",
       description: "motorcycle_install",
+      // 新增：子分组导航（仅该分组启用）
+      subGroups: [
+        {
+          name: "390 Duke 侧板大R贴纸",
+          videos: ["duke390_side_panel"]
+        },
+        {
+          name: "390 Duke 前挡泥板贴纸",
+          videos: [
+            "duke390_fender_a_duke",
+            "duke390_fender_a_rocket",
+            "duke390_fender_b",
+            "duke390_fender_c",
+            "duke390_fender_d",
+            "duke390_fender_e",
+            "duke390_fender_f_duke",
+            "duke390_fender_f_rocket",
+            "duke390_fender_g_duke",
+            "duke390_fender_g_rocket"
+          ]
+        }
+      ]
     }
   }
 }
 
-// ====================== 混合引用例子（已更新为自定义ID格式） ======================
+// ====================== 混合引用例子 ======================
 /*
 descriptions: {
   "duke390_side_panel": "motorcycle_install",
