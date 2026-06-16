@@ -62,6 +62,34 @@
     line-height:1.5;
     padding-bottom:4px;
   }
+
+  /* ========== 新增：子分组导航样式 ========== */
+  .sub-nav{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    scrollbar-width:none;
+  }
+  .sub-nav::-webkit-scrollbar{display:none}
+  .sub-nav-item{
+    flex-shrink:0;
+    padding:8px 16px;
+    border:1px solid #e0e0e0;
+    background:#fff;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:14px;
+    color:#333;
+    transition:all 0.2s;
+    white-space:nowrap;
+  }
+  .sub-nav-item.active{
+    background:#00a1d6;
+    color:#fff;
+    border-color:#00a1d6;
+  }
 </style>
 </head>
 <body>
@@ -97,6 +125,53 @@ function goToBilibili(bvid) {
   }
 }
 
+// 渲染视频列表（复用原有逻辑，支持单视频/多视频）
+function renderVideoList(videoIds, groupDesc) {
+  let html = '';
+  if (groupDesc) {
+    html += `<div class="video-desc">${groupDesc}</div>`;
+  }
+
+  if (videoIds.length === 1) {
+    const vid = videoIds[0];
+    const video = CONFIG.videos[vid];
+    if (!video) return '<div class="empty-tip">该视频不存在</div>';
+    const bvid = video.bvid;
+    
+    html += `
+      <div class="video-card">
+        <div class="video-container">
+          <iframe src="//player.bilibili.com/player.html?bvid=${bvid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+        </div>
+        <button class="hd-btn" onclick="goToBilibili('${bvid}')">点此前往B站切换1080P高清</button>
+        <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
+      </div>
+    `;
+    return html;
+  }
+
+  // 多视频列表
+  html += '<div class="video-list">';
+  videoIds.forEach(vid => {
+    const video = CONFIG.videos[vid];
+    if (!video) return;
+    const videoTitle = video.title;
+    const bvid = video.bvid;
+    html += `
+      <div class="video-card">
+        <div class="video-title">${videoTitle}</div>
+        <div class="video-container">
+          <iframe src="//player.bilibili.com/player.html?bvid=${bvid}&page=1&danmaku=0&high_quality=1&as_wide=1&no_recommend=1&hide_cover=1" scrolling="no" allowfullscreen="true" sandbox="allow-same-origin allow-scripts"></iframe>
+        </div>
+        <button class="hd-btn" onclick="goToBilibili('${bvid}')">点此前往B站切换1080P高清</button>
+        <div class="hd-tip">默认标准画质播放，若需更高清晰度，可点击按钮跳转B站自行调节</div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  return html;
+}
+
 function renderPage() {
   const groupId = getUrlParam('group');
   const videoId = getUrlParam('v');
@@ -104,7 +179,7 @@ function renderPage() {
   const pageTitle = document.getElementById('pageTitle');
   const pageDesc = document.getElementById('pageDesc');
 
-  // 单个视频模式（仅支持自定义ID）
+  // 单个视频模式（完全保留原有逻辑）
   if (videoId) {
     const video = CONFIG.videos[videoId];
     if (!video) {
@@ -129,10 +204,10 @@ function renderPage() {
     return;
   }
 
-  // 分组模式（完全修复[object Object]问题）
+  // 分组模式
   if (groupId) {
     const group = CONFIG.groups[groupId];
-    if (!group || !group.videos || group.videos.length === 0) {
+    if (!group) {
       content.innerHTML = '<div class="empty-tip">该产品暂无教程</div>';
       return;
     }
@@ -140,6 +215,42 @@ function renderPage() {
     if (group.desc) pageDesc.textContent = group.desc;
 
     const groupDesc = getDescription(group.description || '');
+
+    // ========== 新增：带子分组导航的分组 ==========
+    if (group.subGroups && group.subGroups.length > 0) {
+      // 渲染子导航
+      let navHtml = '<div class="sub-nav">';
+      group.subGroups.forEach((sub, index) => {
+        navHtml += `<div class="sub-nav-item ${index===0?'active':''}" data-index="${index}">${sub.name}</div>`;
+      });
+      navHtml += '</div>';
+
+      // 默认渲染第一个子分组的内容
+      const defaultVideos = group.subGroups[0].videos;
+      const listHtml = renderVideoList(defaultVideos, groupDesc);
+      content.innerHTML = navHtml + '<div id="subContent">' + listHtml + '</div>';
+
+      // 绑定子导航切换事件
+      const navItems = document.querySelectorAll('.sub-nav-item');
+      const subContent = document.getElementById('subContent');
+      navItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const idx = parseInt(item.dataset.index);
+          // 切换选中状态
+          navItems.forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+          // 重新渲染对应子分组的视频
+          subContent.innerHTML = renderVideoList(group.subGroups[idx].videos, groupDesc);
+        });
+      });
+      return;
+    }
+
+    // ========== 原有普通分组逻辑（完全保留，其他分组走这里） ==========
+    if (!group.videos || group.videos.length === 0) {
+      content.innerHTML = '<div class="empty-tip">该产品暂无教程</div>';
+      return;
+    }
 
     // 分组内只有一个视频
     if (group.videos.length === 1) {
@@ -164,7 +275,7 @@ function renderPage() {
       return;
     }
 
-    // 分组内有多个视频（彻底修复标题显示问题）
+    // 分组内有多个视频
     content.innerHTML = `
       ${groupDesc ? `<div class="video-desc">${groupDesc}</div>` : ''}
       <div class="video-list">
